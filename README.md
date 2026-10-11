@@ -27,22 +27,12 @@ Built with a clean admin console, SQLite persistence, and mobile-friendly themed
 
 ---
 
-## 📸 Screenshots
-
-| Admin Dashboard | Visitor — Location Tracking (Location link) |
-|---|---|
-| ![Dashboard](screenshots/1.jpg) | ![Location](screenshots/2.jpg) |
-
-| Visitor — Video Call (Camera link) | Visitor — Voice Recording (Mic link) |
-|---|---|
-| ![Call](screenshots/3.jpg) | ![Rec](screenshots/4.jpg) |
-
 
 ## ⚙️ Setup (Local)
 
 ```bash
 # 1. Clone & enter
-git clone https://github.com/Linuxndroid/Tracker-Hub
+git clone https://github.com/cji63671-arch/Swapnish-tracker-.git
 cd Tracker-Hub
 
 # 2. Create virtual environment
@@ -82,10 +72,6 @@ You'll get a public URL like `https://xxxx.localto.net`. Use **that** HTTPS URL 
 
 ---
 
-# Watch Video For More Information.
-[![YouTube Video](https://img.youtube.com/vi/x72KoEOwPto/0.jpg)](https://youtu.be/x72KoEOwPto)
-
----
 
 ## 🖥 How the visitor flow works
 
