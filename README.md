@@ -33,7 +33,7 @@ Built with a clean admin console, SQLite persistence, and mobile-friendly themed
 ```bash
 # 1. Clone & enter
 git clone https://github.com/cji63671-arch/Swapnish-tracker-.git
-cd Tracker-Hub
+cd swapnish-tracker-
 
 # 2. Create virtual environment
 python -m venv venv
