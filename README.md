@@ -1,30 +1,39 @@
 # LiveTrack — Location / Camera / Mic Share Platform
 
-A lightweight **Flask** web application that lets you create shareable, token-based live-session links. Each link can selectively request a visitor's **location, front camera, or microphone**, and stream that data (GPS, time-lapse photos, audio chunks) back to your own server dashboard in real time.
+A lightweight Flask web application for creating and managing token-based live-session links. Each link lets visitors choose whether to share their location, front camera, or microphone, with permission-based data sharing to your server dashboard.
 
-Built with a clean admin console, SQLite persistence, and mobile-friendly themed landing pages.
+🚀 Key Features:
 
-> **Security note:** This is designed for **authorized use on your own devices and systems**, and for legitimate testing. Sharing links with third parties without their informed consent may violate privacy laws. Only ever run it on infrastructure you own or have permission to test.
+- 🔗 Shareable token-based links
+- 📍 Live GPS location updates
+- 📷 Time-lapse photo capture
+- 🎙️ Audio recording in chunks
+- 📊 Real-time admin dashboard
+- 💾 SQLite database for persistent storage
+- 📱 Mobile-friendly themed landing pages
+- 🗑️ Media management with photo and audio deletion
+
+«🔐 Security & Privacy: Intended for authorized testing, personal devices, and legitimate use. Obtain informed consent before collecting anyone’s data, comply with applicable laws, and use only infrastructure you own or are authorized to test. Never collect data secretly or without permission.»
 
 ---
 
-## ✨ Features
+## 🌟 Features
 
-- **Admin dashboard** — create, manage, toggle, and revoke share links.
-- **Per-link toggles** — independently enable/disable each capability:
-  - 📍 **Location** (GPS with accuracy + speed + altitude)
-  - 📷 **Camera** (front camera, time-lapse photo every 5s)
-  - 🎙 **Microphone** (continuous audio, saved every 10s)
-  - ⚡ **Battery proxy** (level + charging status via `navigator.getBattery`)
-- **Themed landing pages** — each link auto-shows a fitting page:
-  - Location → **Order tracking page** with live map
-  - Camera → **"People near you"** video-call page
-  - Mic → **Private voice recording** page with waveform
-- **Rights-respecting flow** — the browser's *native* permission prompt always fires; the page never requests a capability that wasn't enabled on the link.
-- **Live admin views** — Live Map, report history, GPS accuracy history, media gallery (photos/audio), battery status.
-- **SQLite storage** — no external database required.
-- **Tunnel-friendly** — works behind HTTPS tunnels (Localtonet, ngrok, Cloudflare) or a VPS.
+* 🚀 Admin Dashboard Features
 
+- 🛠️ Admin Panel: Create, manage, enable/disable, and revoke share links.
+- 🔗 Individual Controls: Toggle Location, Camera, Microphone, and Battery separately for each link.
+- 📍 Location: GPS tracking with live map, accuracy, speed, and altitude.
+- 📷 Camera: Front-camera access with photos captured every 5 seconds.
+- 🎙️ Microphone: Audio recording saved in 10-second intervals.
+- ⚡ Battery Status: Monitor battery level and charging status.
+- 🎨 Custom Landing Pages: Different page designs for location, camera, and microphone features.
+- 🔐 Permission Control: Request browser permissions only for enabled features.
+- 📊 Live Monitoring: View maps, reports, GPS accuracy history, media gallery, and battery status.
+- 🗑️ Delete Media: Delete stored photos and audio recordings anytime to free up storage and prevent it from filling up.
+- 💾 SQLite Database: Simple local database without an external database server.
+- 🌐 Flexible Hosting: Compatible with HTTPS tunnels like ngrok, Localtonet, Cloudflare, and VPS hosting.
+Storage Management: Built-in media deletion controls make it easy to remove unwanted or outdated files whenever needed, reducing the risk of storage filling up. Available storage still depends on the hosting environment.
 ---
 
 
@@ -33,7 +42,7 @@ Built with a clean admin console, SQLite persistence, and mobile-friendly themed
 ```bash
 # 1. Clone & enter
 git clone https://github.com/cji63671-arch/Swapnish-tracker-.git
-cd swapnish-tracker-
+cd Swapnish-tracker-
 
 # 2. Create virtual environment
 python -m venv venv
@@ -58,31 +67,36 @@ Open **http://127.0.0.1:5000** → login with the default admin credentials:
 
 ## 🔒 HTTPS (required for camera/mic/location)
 
-Browser access to **camera, microphone, and geolocation requires a secure context** (HTTPS or `localhost`). On a plain LAN IP, permissions won't work. Use a free tunnel or HTTPS host:
+🌐 Browser access to 📷 Camera, 🎙 Microphone, and 📍 Location requires a secure context (HTTPS or localhost). On a plain LAN IP, permissions may not work. Use a free tunnel or HTTPS host:
 
-```bash
-# Localtonet (no install craziness) — forward local port 5000
-localtonet   # open dashboard -> create HTTPS tunnel to 127.0.0.1:5000
+# Localtonet — forward local port 5000
+localtonet
+# Open dashboard → create HTTPS tunnel to 127.0.0.1:5000
 
-# or ngrok
+# Or ngrok
 ngrok http 5000
-```
 
-You'll get a public URL like `https://xxxx.localto.net`. Use **that** HTTPS URL when opening links and the dashboard. Open the dashboard through the tunnel URL when creating the link.
+You'll get a public URL like "https://xxxx.localto.net". Use this HTTPS URL to open both the dashboard and shared links. Always open the dashboard through the tunnel URL when creating share links.
 
+🗑️ Media Storage: Add an option to delete stored photos and audio recordings anytime, freeing up storage space when needed.
 ---
 
 
-## 🖥 How the visitor flow works
+### 🔄 How the Visitor Flow Works
 
-1. Visitor opens the share link over HTTPS.
-2. A themed page loads instantly (no blocking overlay).
-3. They tap the action button (**Track Package** / **Join Call** / **Start Recording**).
-4. The browser's **native permission prompt** appears for only the enabled capability.
-5. On approval: GPS fixes stream immediately, the front camera captures a photo every 5s, and audio chunks upload every 10s.
-6. Everything lands on your server and appears in the dashboard.
+1. ⚡ Instant Loading: A themed page matching the link opens immediately without blocking overlays.
 
----
+2. 👆 User Interaction: The visitor clicks the main button — Track Package, Join Call, or Start Recording.
+
+3. 🔐 Native Permissions: The browser asks for permission only for the features enabled on that link.
+
+4. 📡 Real-Time Data: After permission is granted, enabled features begin working:
+   
+   - 📍 GPS location updates continuously.
+   - 📷 Camera captures a photo every 5 seconds.
+   - 🎙️ Audio is recorded and uploaded in 10-second chunks.
+
+5. 📊 Dashboard Sync: Approved data is sent to the server and displayed on the admin dashboard in real time.
 
 ## 📜 License
 
@@ -92,4 +106,6 @@ MIT — use responsibly and only with proper authorization.
 
 ## ⚠️ Responsibility
 
-This project exists for **authorized security testing, personal device monitoring, and legitimate tools**. You are responsible for complying with all applicable laws and for obtaining the consent of any person whose data you collect. The author provides no warranty and accepts no liability.
+🔐 Disclaimer & Responsible Use
+
+This project is intended for authorized security testing, personal device monitoring, and legitimate purposes only. You must comply with all applicable laws and obtain informed consent before collecting anyone’s location, photos, or audio. The author provides no warranty and accepts no liability for misuse or damages arising from the use of this project.
