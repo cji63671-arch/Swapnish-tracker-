@@ -21,7 +21,7 @@ MEDIA_DIR.mkdir(exist_ok=True)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
-ADMIN_USER = os.environ.get("ADMIN_USER", "Swapnish ")
+ADMIN_USER = os.environ.get("ADMIN_USER", "Swapnish")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "123456789")
 ADMIN_HASH = generate_password_hash(ADMIN_PASS)
 
