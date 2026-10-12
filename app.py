@@ -301,7 +301,22 @@ def media_file(mid):
     mime = "image/jpeg" if row["kind"] == "photo" else "video/webm"
     return send_file(path, mimetype=mime, as_attachment=False)
 
+@app.route("/api/media/<int:mid>", methods=["DELETE"])
+@admin_required
+def delete_media(mid):
+    db = get_db()
+    row = db.execute("SELECT * FROM media WHERE id=?", (mid,)).fetchone()
+    if not row:
+        return jsonify({"ok": False, "error": "Media not found"}), 404
 
+    file_path = MEDIA_DIR / row["filename"]
+    if file_path.exists():
+        file_path.unlink()
+
+    db.execute("DELETE FROM media WHERE id=?", (mid,))
+    db.commit()
+
+    return jsonify({"ok": True})
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     if os.environ.get("USE_HTTPS"):
