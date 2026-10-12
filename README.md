@@ -59,7 +59,7 @@ Open **http://127.0.0.1:5000** → login with the default admin credentials:
 
 | Username | Password |
 |----------|----------|
-| `admin`  | `changeme123` |
+| `Swapnish `  | `123456789` |
 
 > ⚠️ **Change the default password** in `app.py` before any real use.
 
