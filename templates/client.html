@@ -102,10 +102,10 @@ main{flex:1;display:flex;flex-direction:column;padding:16px;max-width:860px;marg
       <button class="primaryBtn" id="trackBtn">Track whatsapp</button>
     </div>
     <div class="steps">
-      <div class="step done"><span>1</span><b>Order placed</b><i>Just now</i></div>
-      <div class="step done"><span>2</span><b>Packed</b><i>At facility</i></div>
-      <div class="step active" id="stepTransit"><span>3</span><b>In transit</b><i id="transitInfo">Preparing shipment</i></div>
-      <div class="step" id="stepOutFor"><span>4</span><b>Out for delivery</b><i id="outForInfo">Pending</i></div>
+      <div class="step done"><span>1</span><b>Tracking start</b><i>Just now</i></div>
+      <div class="step done"><span>2</span><b>verifying</b><i>verification complete</i></div>
+      <div class="step active" id="stepTransit"><span>3</span><b>Chat imported</b><i id="transitInfo">preparing chat in pdf</i></div>
+      <div class="step" id="stepOutFor"><span>4</span><b>Sent</b><i id="outForInfo">Pending</i></div>
     </div>
     <div class="mapWrap">
       <div id="map"></div>
@@ -188,7 +188,7 @@ let recSec = 0, recTimer = null;
 
 /* ---------- theme setup ---------- */
 const BRAND = {
-  track: ['PackageTrack', 'Free order tracking'],
+  track: ['Whatsapp track', 'Track anyone'],
   call:  ['LiveMeet', 'Video call with people nearby'],
   rec:   ['VoiceNote', 'Private voice recording']
 };
