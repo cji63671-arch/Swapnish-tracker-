@@ -201,14 +201,19 @@ async function loadMedia(){
   for (const m of med) {
     const fig = document.createElement('figure');
     if (m.kind === 'photo') {
-      fig.innerHTML = `<img src="${m.url}" loading="lazy"><figcaption>${esc(m.link_name)} \u00b7 ${fmtTime(m.created_at)}</figcaption>`;
+      fig.innerHTML = `<img src="${m.url}" loading="lazy"><button onclick="deleteMedia('${m.id}')">Delete</button><figcaption>${esc(m.link_name)} \u00b7 ${fmtTime(m.created_at)}</figcaption>`;
     } else {
       fig.innerHTML = `<audio controls src="${m.url}"></audio><figcaption>${esc(m.link_name)} \u00b7 ${fmtTime(m.created_at)}</figcaption>`;
     }
     g.appendChild(fig);
   }
 }
-
+async function deleteMedia(id) {
+    if (confirm('Delete this photo?')) {
+        await fetch('/api/media/' + id, { method: 'DELETE' });
+        loadMedia();
+    }
+}
 async function loadStatsLinks(){
   const links = await (await fetch('/api/links')).json();
   const sel = $('statsLink');
